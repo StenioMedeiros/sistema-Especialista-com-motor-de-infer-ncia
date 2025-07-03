@@ -1,8 +1,68 @@
 # app.py
 import streamlit as st
 from inference_engine import InferenceEngine
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv # <-- Importe esta linha
 
 st.set_page_config(layout="wide")
+
+# =========================================================================
+# Área para configurar sua chave de API do Gemini
+#
+# Opção 1 (Recomendado): Usar variável de ambiente via .env
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") # Obtém a chave da variável de ambiente
+
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+else:
+    st.error("Erro: A variável de ambiente GOOGLE_API_KEY não está configurada no arquivo .env ou no ambiente.")
+    # Você pode querer sair ou desabilitar funcionalidades da IA aqui
+    # st.stop() # Interrompe a execução do app se a chave não estiver configurada
+
+# =========================================================================
+
+# Inicializa o modelo Gemini Pro FORA da função para evitar recarregamento
+# Apenas inicializa se a chave da API foi configurada com sucesso
+gemini_model = None
+if GOOGLE_API_KEY:
+    try:
+        gemini_model = genai.GenerativeModel('gemini-2.5-pro')
+    except Exception as e:
+        st.error(f"Erro ao inicializar o modelo Gemini: {e}. Verifique se sua chave de API está correta e a conexão.")
+        gemini_model = None # Garante que seja None em caso de falha
+
+def get_keywords_from_gemini(text_description):
+    """
+    Esta função irá interagir com a API do Google Gemini para extrair palavras-chave.
+    """
+    if not text_description.strip():
+        return []
+
+    if gemini_model is None:
+        st.warning("Modelo Gemini não disponível. Não foi possível extrair palavras-chave com a IA. Verifique a configuração da chave de API.")
+        return []
+
+    try:
+        prompt = f"""
+        Analise o seguinte texto em português e extraia as palavras-chave mais relevantes que descrevam o tipo de conduta, a intensidade e qualquer aspecto relacionado a comportamento, assédio, discriminação, ou a ausência deles. Foque em termos que ajudem a classificar a gravidade ou aceitabilidade da ação.
+        Liste as palavras-chave separadas por vírgulas.
+
+        Texto: "{text_description}"
+
+        Palavras-chave:
+        """
+        response = gemini_model.generate_content(prompt)
+        raw_keywords_string = response.text.strip()
+
+        keywords = [k.strip().lower() for k in raw_keywords_string.split(',') if k.strip()]
+        return keywords
+
+    except Exception as e:
+        st.error(f"Erro ao extrair palavras-chave com a API Gemini: {e}. Isso pode ocorrer por problemas de conexão, limites de uso ou conteúdo inadequado. Tente novamente ou ajuste a descrição.")
+        return []
 
 def main():
     st.title("**Sistema Especialista para Avaliação de Gravidade de Condutas UFAPE** ")
@@ -11,6 +71,16 @@ def main():
     st.header("Informações da Conduta")
 
     descricao_conduta = st.text_area("Descreva a conduta:", height=150, help="Descreva detalhadamente o comportamento ou fala a ser avaliado. Inclua palavras-chave que possam indicar o nível de ofensa.")
+
+    grok_extracted_keywords = [] # Mantido para compatibilidade com 'rules.py'
+    if descricao_conduta:
+        with st.spinner("Analisando descrição com IA..."):
+            grok_extracted_keywords = get_keywords_from_gemini(descricao_conduta)
+        if grok_extracted_keywords:
+            st.info(f"**Palavras-chave detectadas pela IA:** {', '.join(grok_extracted_keywords)}")
+        else:
+            st.info("Nenhuma palavra-chave relevante detectada pela IA para a descrição fornecida.")
+
 
     st.subheader("**Fatores Adicionais para Avaliação** ")
 
@@ -86,17 +156,30 @@ def main():
     if st.button("Avaliar Conduta"):
         engine = InferenceEngine()
 
-        # Adicionar fatos do formulário
-        engine.add_fact('descricao', descricao_conduta)
-        engine.add_fact('contexto_formal_informal', contexto_formal_informal if contexto_formal_informal != 'Não se aplica' else None)
-        engine.add_fact('contexto_publico_privado', contexto_publico_privado if contexto_publico_privado != 'Não se aplica' else None)
-        engine.add_fact('historico_envolvidos', historico_envolvidos if historico_envolvidos != 'Não se aplica' else None)
-        engine.add_fact('frequencia_conduta', frequencia_conduta if frequencia_conduta != 'Não se aplica' else None)
-        engine.add_fact('impacto_vitima', impacto_vitima if impacto_vitima != 'Não se aplica' else None)
-        engine.add_fact('sinais_nao_verbais', sinais_nao_verbais if sinais_nao_verbais != 'Não se aplica' else None)
-        engine.add_fact('intencao_percebida', intencao_percebida if intencao_percebida != 'Não se aplica' else None)
-        engine.add_fact('relacao_hierarquica', relacao_hierarquica if relacao_hierarquica != 'Não se aplica' else None)
+        conduta_data = {
+            'descricao': descricao_conduta,
+            'grok_keywords': grok_extracted_keywords # Passa as palavras-chave do Gemini
+        }
 
+        if contexto_formal_informal != 'Não se aplica':
+            conduta_data['contexto_formal_informal'] = contexto_formal_informal
+        if contexto_publico_privado != 'Não se aplica':
+            conduta_data['contexto_publico_privado'] = contexto_publico_privado
+        if historico_envolvidos != 'Não se aplica':
+            conduta_data['historico_envolvidos'] = historico_envolvidos
+        if frequencia_conduta != 'Não se aplica':
+            conduta_data['frequencia_conduta'] = frequencia_conduta
+        if impacto_vitima != 'Não se aplica':
+            conduta_data['impacto_vitima'] = impacto_vitima
+        if sinais_nao_verbais != 'Não se aplica':
+            conduta_data['sinais_nao_verbais'] = sinais_nao_verbais
+        if intencao_percebida != 'Não se aplica':
+            conduta_data['intencao_percebida'] = intencao_percebida
+        if relacao_hierarquica != 'Não se aplica':
+            conduta_data['relacao_hierarquica'] = relacao_hierarquica
+
+        for key, value in conduta_data.items():
+            engine.add_fact(key, value)
 
         final_facts, explanations, applied_rules = engine.run()
 

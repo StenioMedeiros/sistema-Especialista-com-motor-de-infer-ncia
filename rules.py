@@ -11,7 +11,9 @@ rules.append({
         "socialmente aceitável" in conduta['descricao'].lower() or \
         "comentários neutros" in conduta['descricao'].lower() or \
         "elogios simples" in conduta['descricao'].lower() or \
-        "discussões sobre assuntos neutros" in conduta['descricao'].lower(),
+        "discussões sobre assuntos neutros" in conduta['descricao'].lower() or \
+        # NOVO: Adiciona a verificação das palavras-chave do Gemini
+        any(keyword in ['não ofensivo', 'socialmente aceitável', 'neutro', 'elogio', 'discussão pacífica'] for keyword in conduta.get('grok_keywords', [])),
     'consequence': lambda conduta: {
         'nivel_gravidade': 1,
         'explicacao': "A conduta se enquadra no Nível 1 (Em Geral, Não Ofensivo) porque é considerada socialmente aceitável e cotidiana, sem implicar julgamentos ou avaliações baseadas em características pessoais ou culturais. Exemplos incluem comentários sobre corte de cabelo ou elogios por uma roupa nova."
@@ -30,7 +32,9 @@ rules.append({
         "desrespeitoso" in conduta['descricao'].lower() or \
         "insensível" in conduta['descricao'].lower() or \
         "perguntas sobre habilidades de trabalho baseadas em estereótipos de gênero" in conduta['descricao'].lower() or \
-        "comentários sobre aptidão física ou aparência de pessoas de certos grupos étnicos" in conduta['descricao'].lower(),
+        "comentários sobre aptidão física ou aparência de pessoas de certos grupos étnicos" in conduta['descricao'].lower() or \
+        # NOVO: Adiciona a verificação das palavras-chave do Gemini
+        any(keyword in ['constrangedor', 'levemente ofensivo', 'desconforto', 'embaraço', 'estereótipos sutis', 'desrespeitoso', 'insensível'] for keyword in conduta.get('grok_keywords', [])),
     'consequence': lambda conduta: {
         'nivel_gravidade': 2,
         'explicacao': "A conduta se enquadra no Nível 2 (Constrangedor e Levemente Ofensivo) pois, embora não intencione prejudicar, cria desconforto ou embaraço, evocando estereótipos ou preconceitos sutis. Isso pode começar a erodir o sentimento de segurança. Exemplos incluem perguntas sobre habilidades de trabalho baseadas em estereótipos de gênero."
@@ -48,7 +52,9 @@ rules.append({
         "reproduzem estruturas de privilégio" in conduta['descricao'].lower() or \
         "piadas sobre orientação sexual" in conduta['descricao'].lower() or \
         "apelidos pejorativos com marcas raciais ou de gênero" in conduta['descricao'].lower() or \
-        "retirar oportunidades de trabalho por questões de gênero" in conduta['descricao'].lower(),
+        "retirar oportunidades de trabalho por questões de gênero" in conduta['descricao'].lower() or \
+        # NOVO: Adiciona a verificação das palavras-chave do Gemini
+        any(keyword in ['ofensivo', 'preconceito', 'estereótipo', 'privilégio', 'piada', 'apelido pejorativo'] for keyword in conduta.get('grok_keywords', [])),
     'consequence': lambda conduta: {
         'nivel_gravidade': 3,
         'explicacao': "A conduta se enquadra no Nível 3 (Ofensivo) por manifestar falta de consideração pelas diferenças individuais, sociais e culturais, reforçando estereótipos ou preconceitos. Afeta significativamente o bem-estar emocional do indivíduo alvo. Exemplos incluem piadas sobre orientação sexual ou uso de apelidos pejorativos."
@@ -70,7 +76,9 @@ rules.append({
         "insultos diretos" in conduta['descricao'].lower() or \
         "comentários depreciativos sobre capacidade intelectual" in conduta['descricao'].lower() or \
         "humilhação ou ridicularização maliciosa" in conduta['descricao'].lower() or \
-        "imitação ofensiva do sotaque" in conduta['descricao'].lower(),
+        "imitação ofensiva do sotaque" in conduta['descricao'].lower() or \
+        # NOVO: Adiciona a verificação das palavras-chave do Gemini
+        any(keyword in ['humilhante', 'degradante', 'intencional', 'insulto', 'toque não solicitado', 'dano emocional', 'ridicularização', 'depreciativo'] for keyword in conduta.get('grok_keywords', [])),
     'consequence': lambda conduta: {
         'nivel_gravidade': 4,
         'explicacao': "A conduta se enquadra no Nível 4 (Bastante Ofensivo) por ser explicitamente humilhante ou degradante, frequentemente intencional. Inclui condutas fisicamente intrusivas como toques não solicitados, causando danos emocionais substanciais. Exemplos são insultos diretos ou humilhação maliciosa."
@@ -87,7 +95,9 @@ rules.append({
         "avanços sexuais não solicitados" in conduta['descricao'].lower() or \
         "comentários racistas" in conduta['descricao'].lower() or \
         "compartilhamento ou armazenamento de material pornográfico no local de trabalho" in conduta['descricao'].lower() or \
-        "sugestão de retaliação a não envolvimento sexual" in conduta['descricao'].lower(),
+        "sugestão de retaliação a não envolvimento sexual" in conduta['descricao'].lower() or \
+        # NOVO: Adiciona a verificação das palavras-chave do Gemini
+        any(keyword in ['agressivo', 'ambiente hostil', 'intimidador', 'assédio sexual', 'racista', 'material pornográfico', 'retaliação'] for keyword in conduta.get('grok_keywords', [])),
     'consequence': lambda conduta: {
         'nivel_gravidade': 5,
         'explicacao': "A conduta se enquadra no Nível 5 (Agressivo e Não Fisicamente Violento) por envolver ações persistentes ou degradantes baseadas em gênero, raça ou sexualidade, criando um ambiente hostil e intimidador. Exemplos incluem avanços sexuais não solicitados, comentários racistas ou compartilhamento de material pornográfico no local de trabalho."
@@ -103,7 +113,9 @@ rules.append({
         "ameaças de violência grave" in conduta['descricao'].lower() or \
         "coerção que coloque em risco a segurança física" in conduta['descricao'].lower() or \
         "ameaça direta à integridade física ou psicológica" in conduta['descricao'].lower() or \
-        "qualquer forma de coerção ou violência física" in conduta['descricao'].lower(),
+        "qualquer forma de coerção ou violência física" in conduta['descricao'].lower() or \
+        # NOVO: Adiciona a verificação das palavras-chave do Gemini
+        any(keyword in ['violência física', 'agressão física', 'ameaça grave', 'coerção física', 'risco segurança'] for keyword in conduta.get('grok_keywords', [])),
     'consequence': lambda conduta: {
         'nivel_gravidade': 6,
         'explicacao': "A conduta se enquadra no Nível 6 (Agressivo e Fisicamente Violento), representando a forma mais extrema de conduta inapropriada, envolvendo agressões físicas, ameaças de violência grave ou qualquer forma de coerção que coloque em risco a segurança física. Isso tem um impacto devastador sobre as vítimas."
@@ -125,7 +137,8 @@ rules.append({
 rules.append({
     'name': 'Fator_Contexto_Conotacao_Sexual_Privado',
     'condition': lambda conduta:
-        "conotação sexual" in conduta['descricao'].lower() and \
+        "conotação sexual" in conduta['descricao'].lower() or \
+        any(keyword in ['conotação sexual', 'sexualmente sugestivo'] for keyword in conduta.get('grok_keywords', [])) and \
         conduta.get('contexto_publico_privado') == 'Privado',
     'consequence': lambda conduta: {
         'agravante_contexto': True,
@@ -182,7 +195,7 @@ rules.append({
         conduta.get('impacto_vitima') == 'Impacto negativo considerável',
     'consequence': lambda conduta: {
         'agravante_impacto': True,
-        'explicacao': "O impacto na vítima é um agravante, pois gerou consequências de curto prazo e não muito graves para a vítima. [cite: 209]"
+        'explicacao': "O impacto na vítima é um agravante, pois gerou consequências de curto prazo e não muito graves para a vítima."
     }
 })
 
